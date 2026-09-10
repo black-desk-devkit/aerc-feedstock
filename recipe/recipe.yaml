@@ -17,20 +17,30 @@ build:
     overlinking_behavior: error
     overdepending_behavior: error
   script:
-    - make VERSION=${{ version }} BUILD_OPTS="-buildmode=pie -trimpath" GO_EXTRA_LDFLAGS="-s -w"
-    - make install
-    - go-licenses save . --save_path=license-files
+    - export CGO_ENABLED=1
+    - export CGO_CFLAGS="-I$PREFIX/include"
+    - export CGO_LDFLAGS="-L$PREFIX/lib"
+    - >-
+      make VERSION=${{ version }} SHAREDIR=/usr/local/share/aerc
+      LIBEXECDIR=/usr/local/libexec/aerc GOFLAGS="-tags=notmuch"
+      BUILD_OPTS="-buildmode=pie -trimpath" GO_EXTRA_LDFLAGS="-s -w"
+    - make install PREFIX="$PREFIX" GOFLAGS="-tags=notmuch"
+    - GOFLAGS="-tags=notmuch" go-licenses save . --save_path=license-files
     # Clear out cache to avoid file not removable warnings
     - if: unix
       then: chmod -R u+w $(go env GOPATH) && rm -rf $(go env GOPATH)
 
 requirements:
   build:
-    - ${{ compiler("go-cgo") }} >=1.23
+    - go >=1.25
     - ${{ compiler("c") }}
     - go-licenses
     - make
     - scdoc
+  host:
+    - notmuch
+  run:
+    - notmuch
 
 tests:
   - package_contents:
@@ -43,6 +53,7 @@ tests:
         - aerc
   - script:
       - aerc -h
+      - aerc -v | grep '+notmuch-'
 
 about:
   homepage: https://aerc-mail.org/

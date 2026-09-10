@@ -1,0 +1,34 @@
+--- a/config/config.go
++++ b/config/config.go
+@@ -5,6 +5,7 @@
+ 	"fmt"
+ 	"os"
+ 	"path"
++	"path/filepath"
+ 	"slices"
+ 	"strings"
+ 
+@@ -19,6 +20,15 @@
+ )
+ 
+ func buildDefaultDirs() []string {
++	var condaDirs []string
++	if executable, err := os.Executable(); err == nil {
++		prefix := filepath.Dir(filepath.Dir(executable))
++		condaDirs = append(condaDirs,
++			filepath.Join(prefix, "libexec", "aerc"),
++			filepath.Join(prefix, "share", "aerc"),
++		)
++	}
++
+ 	var defaultDirs []string
+ 
+ 	prefixes := []string{
+@@ -51,6 +61,7 @@
+ 	defaultDirs = append(defaultDirs, "/usr/local/share/aerc")
+ 	defaultDirs = append(defaultDirs, "/usr/libexec/aerc")
+ 	defaultDirs = append(defaultDirs, "/usr/share/aerc")
++	defaultDirs = append(defaultDirs, condaDirs...)
+ 
+ 	return defaultDirs
+ }
